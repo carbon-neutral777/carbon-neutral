@@ -28,7 +28,6 @@
 
   <!-- 광고 위치 -->
   <div class="ads-box">
-    <!-- 구글 애드센스 광고 영역 -->
     <ins class="adsbygoogle"
          style="display:inline-block;width:300px;height:250px"
          data-ad-client="ca-pub-여기에_광고ID"
@@ -44,34 +43,31 @@
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [127.7669, 35.9078], // 한국 중심 좌표
+      center: [127.7669, 35.9078],
       zoom: 6
     });
 
     const markers = [
-const markers = [
-  {
-    coordinates: [126.6, 35.9],
-    description: '새만금 태양광 발전소<br>전라북도 군산시<br>2.1GW 규모'
-  },
-  {
-    coordinates: [126.1, 35.3],
-    description: '영광 낙월 해상풍력<br>전라남도 영광군<br>400MW 계획'
-  },
-  {
-    coordinates: [129.2, 35.5],
-    description: '울산 부유식 해상풍력<br>울산광역시<br>1.4GW 규모'
-  },
-  {
-    coordinates: [126.3, 33.4],
-    description: '탐라 해상풍력 발전소<br>제주 서귀포<br>30MW 운전 중'
-  },
-  {
-    coordinates: [126.2, 34.5],
-    description: '서남해 해상풍력 실증단지<br>전남 신안·고흥<br>60MW 실증 중'
-  }
-];
-
+      {
+        coordinates: [126.6, 35.9],
+        description: '새만금 태양광 발전소<br>전라북도 군산시<br>2.1GW 규모'
+      },
+      {
+        coordinates: [126.1, 35.3],
+        description: '영광 낙월 해상풍력<br>전라남도 영광군<br>400MW 계획'
+      },
+      {
+        coordinates: [129.2, 35.5],
+        description: '울산 부유식 해상풍력<br>울산광역시<br>1.4GW 규모'
+      },
+      {
+        coordinates: [126.3, 33.4],
+        description: '탐라 해상풍력 발전소<br>제주 서귀포<br>30MW 운전 중'
+      },
+      {
+        coordinates: [126.2, 34.5],
+        description: '서남해 해상풍력 실증단지<br>전남 신안·고흥<br>60MW 실증 중'
+      }
     ];
 
     markers.forEach(marker => {
