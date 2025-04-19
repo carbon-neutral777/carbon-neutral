@@ -17,32 +17,40 @@
       height: 250px;
       background: white;
       z-index: 999;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
     }
   </style>
 </head>
 <body>
+
+  <!-- 지도 -->
   <div id="map"></div>
 
+  <!-- 광고 위치 -->
   <div class="ads-box">
+    <!-- 구글 애드센스 광고 영역 -->
     <ins class="adsbygoogle"
          style="display:inline-block;width:300px;height:250px"
          data-ad-client="ca-pub-여기에_광고ID"
          data-ad-slot="여기에_광고슬롯ID"></ins>
-    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
   </div>
 
+  <!-- Mapbox 지도 스크립트 -->
   <script>
-    mapboxgl.accessToken = '여기에_Mapbox_API_토큰';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiY2FyYm9uLW5ldXRyYWwiLCJhIjoiY205bzNhajY0MG85bTJrcTVoZGo2anBpaCJ9.XFKhscFBB4Jkbm0SI8aJ1Q';
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [127.7669, 35.9078],
+      center: [127.7669, 35.9078], // 한국 중심 좌표
       zoom: 6
     });
 
     const markers = [
-      { coordinates: [126.5, 35.4], description: '새만금 태양광' },
-      { coordinates: [126.3, 34.7], description: '영광 풍력' }
+      { coordinates: [126.5, 35.4], description: '새만금 태양광 발전소' },
+      { coordinates: [126.3, 34.7], description: '영광 낙월 해상풍력' }
     ];
 
     markers.forEach(marker => {
@@ -53,6 +61,8 @@
     });
   </script>
 
+  <!-- 구글 애드센스 스크립트 -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
 </body>
 </html>
