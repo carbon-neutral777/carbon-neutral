@@ -2,42 +2,102 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>그린에너지맵</title>
+  <title>한국 풍력 발전소 지도</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link href='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css' rel='stylesheet' />
   <style>
     body, html { margin: 0; padding: 0; height: 100%; }
     #map { position:absolute; top:0; bottom:0; width:100%; }
-    .ads-box {
+    .map-overlay {
+      position: absolute;
+      background: white;
+      padding: 10px;
+      font-family: sans-serif;
+      z-index: 2;
+      top: 10px;
+      left: 10px;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+    .filter-box, .style-box {
+      margin-top: 10px;
+    }
+    #windChart, #regionStats, #powerEstimate {
       position: absolute;
       bottom: 10px;
-      left: 10px;
+      right: 10px;
       width: 300px;
-      height: 250px;
+      height: auto;
       background: white;
-      z-index: 999;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #regionStats {
+      top: 10px;
+      right: 10px;
+    }
+    #powerEstimate {
+      bottom: 230px;
+    }
+    .search-box {
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-
-  <!-- 지도 -->
   <div id="map"></div>
-
-  <!-- 광고 위치 -->
-  <div class="ads-box">
-    <ins class="adsbygoogle"
-         style="display:inline-block;width:300px;height:250px"
-         data-ad-client="ca-pub-여기에_광고ID"
-         data-ad-slot="여기에_광고슬롯ID"></ins>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
+  <div class="map-overlay">
+    <h3>한국 풍력 발전소</h3>
+    <p>대표 발전소 위치를 지도에서 확인하세요.</p>
+    <div class="filter-box">
+      <label for="regionFilter">지역 필터:</label>
+      <select id="regionFilter">
+        <option value="">전체</option>
+        <option value="전남">전남</option>
+        <option value="경북">경북</option>
+        <option value="제주">제주</option>
+        <option value="전북">전북</option>
+        <option value="울산">울산</option>
+        <option value="경기">경기</option>
+      </select>
+    </div>
+    <div class="filter-box">
+      <label for="statusFilter">상태 필터:</label>
+      <select id="statusFilter">
+        <option value="">전체</option>
+        <option value="운영 중">운영 중</option>
+        <option value="계획">계획</option>
+        <option value="실증 중">실증 중</option>
+      </select>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchBox" placeholder="발전소 검색...">
+    </div>
+    <div class="style-box">
+      <label for="mapStyle">지도 스타일:</label>
+      <select id="mapStyle">
+        <option value="streets-v12">기본</option>
+        <option value="satellite-streets-v12">위성지도</option>
+        <option value="dark-v10">다크모드</option>
+      </select>
+    </div>
   </div>
 
-  <!-- Mapbox 지도 스크립트 -->
+  <canvas id="windChart"></canvas>
+  <div id="regionStats">
+    <h4>지역별 통계</h4>
+    <ul id="regionCountList"></ul>
+  </div>
+  <div id="powerEstimate">
+    <h4>예상 발전량 (풍속 기반)</h4>
+    <p id="powerOutput">계산 중...</p>
+  </div>
+
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiY2FyYm9uLW5ldXRyYWwiLCJhIjoiY205bzNhajY0MG85bTJrcTVoZGo2anBpaCJ9.XFKhscFBB4Jkbm0SI8aJ1Q';
     const map = new mapboxgl.Map({
@@ -47,39 +107,48 @@
       zoom: 6
     });
 
-    const markers = [
-      {
-        coordinates: [126.6, 35.9],
-        description: '새만금 태양광 발전소<br>전라북도 군산시<br>2.1GW 규모'
-      },
-      {
-        coordinates: [126.1, 35.3],
-        description: '영광 낙월 해상풍력<br>전라남도 영광군<br>400MW 계획'
-      },
-      {
-        coordinates: [129.2, 35.5],
-        description: '울산 부유식 해상풍력<br>울산광역시<br>1.4GW 규모'
-      },
-      {
-        coordinates: [126.3, 33.4],
-        description: '탐라 해상풍력 발전소<br>제주 서귀포<br>30MW 운전 중'
-      },
-      {
-        coordinates: [126.2, 34.5],
-        description: '서남해 해상풍력 실증단지<br>전남 신안·고흥<br>60MW 실증 중'
+    async function fetchWindSpeed() {
+      const lat = 35.9078;
+      const lon = 127.7669;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=windspeed_10m`;
+      try {
+        const res = await axios.get(url);
+        const hourly = res.data.hourly.windspeed_10m.slice(0, 6);
+        updateWindChart(hourly);
+        estimatePowerOutput(hourly);
+      } catch (err) {
+        console.error("기상 데이터 오류:", err);
       }
-    ];
+    }
 
-    markers.forEach(marker => {
-      new mapboxgl.Marker()
-        .setLngLat(marker.coordinates)
-        .setPopup(new mapboxgl.Popup().setHTML(`<strong>${marker.description}</strong>`))
-        .addTo(map);
-    });
+    function updateWindChart(data) {
+      windChart.data.datasets[0].data = data;
+      windChart.update();
+    }
+
+    function estimatePowerOutput(speeds) {
+      const k = 0.5;
+      const outputs = speeds.map(v => k * Math.pow(v, 3));
+      const avg = outputs.reduce((a, b) => a + b, 0) / outputs.length;
+      document.getElementById("powerOutput").textContent = `${avg.toFixed(2)} kW 예상`;
+    }
+
+    function updateRegionStats() {
+      const regionCounts = {};
+      windFarms.forEach(f => {
+        regionCounts[f.region] = (regionCounts[f.region] || 0) + 1;
+      });
+      const list = document.getElementById("regionCountList");
+      list.innerHTML = '';
+      for (let region in regionCounts) {
+        const li = document.createElement("li");
+        li.textContent = `${region}: ${regionCounts[region]}개`;
+        list.appendChild(li);
+      }
+    }
+
+    updateRegionStats();
+    fetchWindSpeed();
   </script>
-
-  <!-- 구글 애드센스 스크립트 -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-
 </body>
 </html>
